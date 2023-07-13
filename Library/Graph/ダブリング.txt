@@ -1,0 +1,77 @@
+/*
+
+ダブリング
+
+問題    https://atcoder.jp/contests/abc179/tasks/abc179_e
+提出    https://atcoder.jp/contests/abc179/submissions/41163263
+
+問題　　https://atcoder.jp/contests/abc241/tasks/abc241_e
+提出　　https://atcoder.jp/contests/abc241/submissions/35431550
+
+問題　　https://atcoder.jp/contests/abc167/tasks/abc167_d
+提出　　https://atcoder.jp/contests/abc167/submissions/40279532
+ 
+問題    https://atcoder.jp/contests/abc296/tasks/abc296_e
+提出    https://atcoder.jp/contests/abc296/submissions/40279483
+
+
+機能
+
+doubling.init(V<ll> next)  初期化                            
+doubling.x_pos(ll pos  , ll K)  頂点posに対してK回行動した後のposを返す
+
+バグ原因1   nextの値が　0 <= next[i] < N になってない。
+バグ原因2   Kの値が大きすぎる 2^60までなら対応可
+バグ原因3   nextに次の頂点を入れてない
+バグ原因3   頂点数が220000より多い
+
+*/
+
+struct doubling{
+       long long D;
+       vector<vector<long long>> to;
+       long long N;
+
+       //コンストラクタ
+       doubling(){
+            D = 62;
+            to = vector<vector<long long>>(D,vector<long long>(220000));
+            N = 0;
+       }
+
+       // 初期化
+       void init(vector<long long> next){
+            N = next.size();
+            for(long long i = 0 ; i < N ; i++){
+                to[0][i] = next[i];
+            }
+
+            for(long long i = 0 ; i <= 60 ; i++){
+                for(long long j = 0 ; j < N ; j++){
+                    to[i+1][j] = to[i][to[i][j]];
+                }
+            }
+            
+       } 
+
+       // 頂点posから、K回後の頂点を求める
+       long long x_pos(long long pos , long long K){
+            long long x = pos ;
+            for(long long j = 60 ; j >= 0 ; j--){
+                long long l = (1LL << j) ;
+                if(l <= K){
+                    K -= l ;
+                    x = to[j][x] ;
+                }
+            }
+
+            return x ;
+       }
+};
+
+doubling doubling ;
+
+
+
+
+

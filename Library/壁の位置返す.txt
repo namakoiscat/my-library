@@ -1,0 +1,125 @@
+/*
+
+Grid上の壁が存在する位置を、今いる位置から見て4方向探索して返す関数
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!      　　　　  0-indexにして!                       !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+機能
+
+Grid.init(vector<pair<long long,long long>>,long long H,long long W)       : 壁の位置(0-index),y側の長さH,x側の長さWを渡して初期化
+Grid_Search(long long y,long long x)          : 今いる位置に壁があるかどうかをbool値で返す。trueなら壁
+Grid.U_opration(long long y,long long x)      : 今いる位置から見て上側にある壁の位置をpair型で返す。壁がない場合は、{-1,x}が返ってくる。 
+Grid.D_opration(long long y,long long x)      : 今いる位置から見て下側にある壁の位置をpair型で返す。壁がない場合は、{H,x}が返ってくる。
+Grid.R_opration(long long y,long long x)      : 今いる位置から見て右側にある壁の位置をpair型で返す。壁がない場合は、{y,W}が返ってくる。
+Grid.L_opration(long long y,long long x)      : 今いる位置から見て左側にある壁の位置をpair型で返す。壁がない場合は、{y,-1}が返ってくる。
+
+問題   https://atcoder.jp/contests/abc273/tasks/abc273_d
+提出   https://atcoder.jp/contests/abc273/submissions/43042206
+
+問題   https://atcoder.jp/contests/abc197/tasks/abc197_b
+提出   https://atcoder.jp/contests/abc197/submissions/43043605
+
+問題   https://atcoder.jp/contests/abc182/tasks/abc182_e
+提出   https://atcoder.jp/contests/abc182/submissions/43260754
+
+
+*/
+
+struct Gird_Block_Search{
+  
+       map<long long,vector<long long>> MAPx ;
+       map<long long,vector<long long>> MAPy ;
+       map<pair<long long,long long>,long long> MAP ;
+       long long H,W ;
+       
+       void init(vector<pair<long long,long long>> &A, long long HH , long long WW){
+            long long N = A.size() ;
+            H = HH ;
+            W = WW ;
+            for(long long i = 0 ; i < N ; i++){
+               long long y = A[i].first ;
+               long long x = A[i].second ;
+               
+               MAPx[y].push_back(x) ;
+               MAPy[x].push_back(y) ;
+               MAP[pair<long long,long long>{y,x}] = 1 ;
+            }
+            
+            for(auto it = MAPx.begin() ; it != MAPx.end() ; it++){
+                (it->second).push_back(-1) ;
+                (it->second).push_back(W) ;
+                sort((it->second).begin(), (it->second).end());
+            }
+            
+            for(auto it = MAPy.begin() ; it != MAPy.end() ; it++){
+                (it->second).push_back(-1) ;
+                (it->second).push_back(H) ;
+                sort((it->second).begin(), (it->second).end());                
+            }
+            
+       }
+       
+       bool Gird_Search(long long y , long long x){
+            if(MAP[pair<long long,long long>{y,x}] == 1) return  true ;
+            else return false ;
+       }
+       
+       pair<long long,long long> U_opration(long long y, long long x){
+          bool flag = Gird_Search(y,x) ;
+          assert(flag == false) ;
+          auto it = MAPy.find(x) ;
+          if(it != MAPy.end()){
+             auto it2 = lower_bound((it->second).begin() , (it->second).end(),y) ;
+             it2 -- ;
+             return {*it2,x} ;
+          }else{
+             return {-1,x} ;    
+          }
+          
+       }
+       
+       pair<long long,long long> D_opration(long long y, long long x){
+         bool flag = Gird_Search(y,x) ;
+         assert(flag == false) ;           
+         auto it = MAPy.find(x) ;
+         if(it != MAPy.end()){
+            auto it2 = lower_bound((it->second).begin() , (it->second).end(),y) ;
+            return {*it2,x} ;
+         }else{
+          return {H,x} ;     
+         }
+         
+       } 
+       
+       pair<long long,long long> L_opration(long long y , long long x){
+         bool flag = Gird_Search(y,x) ;
+         assert(flag == false) ;           
+         auto it = MAPx.find(y) ;
+         if(it != MAPx.end()){
+            auto it2 = lower_bound((it->second).begin() , (it->second).end(),x) ;     
+            it2 -- ;
+            return {y,*it2} ;
+         }else{
+            return {y,-1} ;     
+         }
+         
+       }
+       
+       pair<long long,long long> R_opration(long long y , long long x){
+         bool flag = Gird_Search(y,x) ;
+         assert(flag == false) ;           
+         auto it = MAPx.find(y) ;
+         if(it != MAPx.end()){
+            auto it2 = lower_bound((it->second).begin() , (it->second).end(),x) ; 
+            return {y,*it2} ;
+         }else{
+           return {y,W} ;    
+         }
+         
+       }
+       
+};
+
+Gird_Block_Search Gird_Block_Search ;

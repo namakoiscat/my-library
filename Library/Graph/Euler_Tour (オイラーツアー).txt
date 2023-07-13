@@ -1,0 +1,414 @@
+/*
+
+Euler_Tour (オイラーツアー)
+
+
+-------------------function-------------------------------------------------
+
+Euler_Tour.init(頂点数,辺の数,頂点の重み配列,辺の重み配列)                     初期化
+Euler_Tour.dfs()                                                          オイラーツアーの初期化
+Euler_Tour.give_vector(string S)                                          欲しい配列返す S∈{visit,vcost1,vcost2,ecost1,ecost2,depth,Discovery,Finishing} 
+Euler_Tour.special_vector(string S)                                       WM用のuint64_tの配列頂点を初めて訪れた時のみ頂点を記録する
+Euler_Tour.subtree_vertex_whight_init()                                   クエリに答える為の初期化
+Euler_Tour.subtree_vertex_whight(long long x)                             頂点xの部分木の頂点の重みの総和を求める
+Euler_Tour.subtree_edge___whight(long long x)                             頂点xの部分木の辺の重みの総和を求める
+Euler_Tour.change_vertex__whight(long long pos , long long x)             頂点posの重みをｘに変える
+Euler_Tour.change_edge____whight(long long u , long long v , long long x) 辺のu-vの重さをｘに変更する
+Euler_Tour.root_vertex_query(long long x)                                 根から頂点xまでの頂点の重みの総和を求める
+Euler_Tour.root_edge___query(long long x)　                               根からその頂点ｘまでの辺の重みを求める
+Euler_Tour.vertex_whight_please(long long x)                              今の頂点xの重みを返す
+Euler_Tour.edge___whight_please(long long u , long long v)                今の頂点u-vの重み返す
+
+----↑↑↑↑-------------main外にかいてある----------------------------------------
+
+----↓↓↓↓-------------main内にかいてある----------------------------------------
+LCA(long long u , long long v)                                    u-vのLCA返す
+any_two_vertices_vertex(long long u , long long v)                任意の2頂点の頂点総和
+any_two_vertices___egde(long long u , long long v)                任意の2頂点の辺総和
+
+-------------------function-------------------------------------------------
+
+-------------------参考------------------------------------------------------
+
+https://qiita.com/recuraki/items/72e37eb9be9f71bc623a
+
+https://wk1080id.hatenablog.com/entry/2020/05/30/004858
+
+-------------------参考------------------------------------------------------
+
+-------------------問題------------------------------------------------------
+   
+問題  https://atcoder.jp/contests/abc294/tasks/abc294_g
+提出  https://atcoder.jp/contests/abc294/submissions/40895878
+
+問題  https://judge.yosupo.jp/problem/vertex_add_path_sum
+提出  https://judge.yosupo.jp/submission/135854
+
+問題  https://judge.yosupo.jp/problem/vertex_add_subtree_sum
+提出  https://judge.yosupo.jp/submission/135856
+     
+根からuまでの最短パスの辺の重み　＝　depth[u]と同じ  WM用のやつは初めて登場した頂点のみ記録してるので、併用する際は、二度目以降
+登場した頂点が0として記録されているので、根と区別できないことに注意。(この問題の提出では、根が来た際は別で処理してる。)
+
+問題  https://atcoder.jp/contests/abc202/tasks/abc202_e
+提出  https://atcoder.jp/contests/abc202/submissions/42875201  
+
+-------------------問題------------------------------------------------------
+
+*/
+
+// ----------------main外に書くcode-----------------------------------------------------
+
+// これはセグ木の初期化のやつ ACL使ってる
+// Range_minimum_query
+
+struct S {
+       long long cost ;
+       long long index ;
+};
+
+S op(S a , S b){
+     if(a.cost <= b.cost)return a ;
+     else return b ;
+}
+
+S e(){return {1000000000000000000LL,0} ;}
+
+
+struct Euler_Tour {
+    
+    vector<vector<long long>> G ; 
+    vector<long long> visit ;  //オイラーツアーで訪れた順に頂点を管理
+    vector<uint64_t>  visit1 ; // 初めて訪れた時だけ管理
+    vector<long long> vcost1 ; // 頂点の重みを時間順に管理
+    vector<long long> vcost2 ; // 頂点の重みを時間順に管理
+    vector<long long> ecost1 ; // 辺の重みを時間順に管理
+    vector<long long> ecost2 ; // 辺の重みを時間順に管理
+    vector<long long> depth ;  // 頂点の深さ管理
+    vector<long long> Discovery ; // 頂点が初めて登場した時を管理
+    vector<long long> Finishing ; // 頂点が最後に出て行った時を管理
+    vector<long long> vwhight ;   // 頂点の重み管理
+    vector<long long> ewhight ;   // 辺の重み管理
+    vector<long long> Range_Sum_Query_vcost1 ; // 頂点の重みのクエリに答える配列
+    vector<long long> Range_Sum_Query_ecost1 ; // 頂点の重みのクエリに答える配列
+    vector<long long> Range_Sum_Query_vcost2 ; // 辺の重みのクエリに答える配列
+    vector<long long> Range_Sum_Query_ecost2 ; // 辺の重みのクエリに答える配列
+    map<pair<long long,long long>,long long> MAP ; // 辺の重みを管理
+    
+    void init(long long N,long long M , vector<long long> A , vector<tuple<long long,long long,long long>> B){
+         G.resize(N+M);
+         visit1.resize(N+M,0) ;
+         vcost1.resize(N+M+1);
+         vcost2.resize(N+M+1);
+         ecost1.resize(N+M+1);
+         ecost2.resize(N+M);
+         depth.resize(N+M);
+         Discovery.resize(N);
+         Finishing.resize(N);
+         vwhight.resize(N) ;
+         ewhight.resize(M) ;
+         Range_Sum_Query_vcost1.resize(N+M+3) ;
+         Range_Sum_Query_ecost1.resize(N+M+3) ;
+         Range_Sum_Query_vcost2.resize(N+M+3) ;
+         Range_Sum_Query_ecost2.resize(N+M+3) ;
+         
+         for(long long i = 0 ; i < N ; i++){
+             vwhight[i] = A[i] ;
+         }
+         
+         for(long long i = 0 ; i < M ; i++){
+             auto [a,b,c] = B[i] ;
+             MAP[pair<long long,long long>{a,b}] = c ;
+             MAP[pair<long long,long long>{b,a}] = c ;
+             ewhight[i] = c ;
+             G[a].push_back(b) ;
+             G[b].push_back(a) ;
+         }
+         vcost2[N+M] = - vwhight[0] ;
+         
+    } 
+  
+    void dfs(long long now = 0 , long long pre = -1, long long k = 0  ){
+         vcost1[visit.size()] = vwhight[now] ;
+         vcost2[visit.size()] = vwhight[now] ;
+         ecost1[visit.size()] = MAP[pair<long long,long long>{now,pre}] ;
+         ecost2[visit.size()] = MAP[pair<long long,long long>{now,pre}] ;
+         depth [visit.size()] = k ;
+         visit1[(uint64_t)visit.size()] = now  ;
+         Discovery[now] = visit.size() ; 
+         visit.push_back(now) ;
+         for(auto &u : G[now]){
+             if(u != pre){
+             dfs(u,now,k+1) ;
+             vcost2[visit.size()] = - vwhight[u] ;
+             ecost2[visit.size()] = - MAP[pair<long long,long long>{u,now}] ;
+             depth [visit.size()] = k ;
+             visit.push_back(now) ;
+             }
+         }
+         Finishing[now] = visit.size() ;
+         return ;
+    }
+    
+    vector<long long> give_vector(string S){
+          if(S == "visit" ){
+              long long D = depth.size() ;
+              visit.resize(D) ;
+              return visit ;
+          }
+          if(S == "vcost1")return vcost1 ;
+          if(S == "vcost2")return vcost2 ;
+          if(S == "ecost1")return ecost1 ;
+          if(S == "ecost2")return ecost2 ;
+          if(S == "depth" )return depth ;
+          if(S == "Discovery")return Discovery  ;
+          if(S == "Finishing")return Finishing ;
+    }
+
+    vector<uint64_t> special_vector(string S){
+                       if(S == "visit1")return visit1 ;
+         }
+    
+    void add(long long i , long long x , long long k){
+        long long n = Range_Sum_Query_vcost1.size() ;
+        
+        if(k == 1){
+            while(i <= n){
+            Range_Sum_Query_vcost1[i] += x ;
+            i+=i&-i ;
+        }
+        
+        }
+        if(k == 2){
+            while(i <= n){
+            Range_Sum_Query_ecost1[i] += x ;
+            i+=i&-i ;
+        }
+        
+        }
+        if(k == 3){
+            while(i <= n){
+            Range_Sum_Query_vcost2[i] += x ;
+            i+=i&-i ;
+        }
+        
+        }
+        if(k == 4){
+            while(i <= n){
+            Range_Sum_Query_ecost2[i] += x ;
+            i+=i&-i ;
+        }
+        
+        }
+        
+    }
+    
+    long long SUM(long long i,long long k){
+       long long s = 0 ;
+       
+       if(k == 1){
+          while(i){
+               s += Range_Sum_Query_vcost1[i] ;
+               i-=i&-i ;
+          } 
+       }
+       
+       if(k == 2){
+          while(i){
+              s += Range_Sum_Query_ecost1[i] ;
+              i-=i&-i ;
+          }
+           
+       }
+       
+       if(k == 3){
+          while(i){
+              s += Range_Sum_Query_vcost2[i] ;
+              i-=i&-i ;
+          }
+       }
+       
+       if(k == 4){
+          while(i){
+              s += Range_Sum_Query_ecost2[i] ;
+              i-=i&-i ;
+          }
+       }
+       
+       return s ;
+    }
+    
+    long long sum(long long l , long long r , long long k){
+        long long ans =  SUM(r,k) - SUM(l-1,k) ;   
+        return ans ;
+    }
+    
+    void subtree_vertex_whight_init(){
+         long long D = vcost1.size() ;
+         for(long long i = 0 ; i < D ; i++){
+             add(i+1,vcost1[i],1) ;
+             add(i+1,ecost1[i],2) ;
+             add(i+1,vcost2[i],3) ;
+             add(i+1,ecost2[i],4) ;
+         }
+         
+    }
+    
+    
+    long long subtree_vertex_whight(long long x){
+       long long l = Discovery[x] ;
+       long long r = Finishing[x] ;
+       
+       long long ans = sum(l+1,r+1,1) ;
+       
+       return ans ;
+        
+    }   
+    
+    long long subtree_edge___whight(long long x){
+       long long l = Discovery[x] ;
+       long long r = Finishing[x] ;
+       
+       long long ans = sum(l+2,r+1,2) ;  
+       
+       return ans ;
+    }
+    
+    void change_vertex__whight(long long pos , long long x){
+         // vcost1の方の変更
+         long long index = Discovery[pos] ;
+         long long pre_w = sum(index+1,index+1,1) ;
+         add(index+1,-pre_w,1) ;
+         add(index+1,x,1) ;
+         
+         // vcost2の方の変更
+         pre_w = sum(index+1,index+1,3) ;
+         add(index+1,-pre_w,3) ;
+         add(index+1,x,3) ;
+         
+         long long index2 = Finishing[pos] ;
+         pre_w = sum(index2+1,index2+1,3) ;
+         add(index2+1,-pre_w,3) ;
+         add(index2+1,-x,3) ;
+    }
+    
+    void change_edge____whight(long long u , long long v , long long x){
+         // ecost1の方の変更
+         long long index = max(Discovery[u],Discovery[v]) ;
+         long long pre_w = sum(index+1,index+1,2) ;
+         add(index+1,-pre_w,2) ;
+         add(index+1,x,2) ;
+         
+         // ecost2の方の変更
+         long long index2 ;
+         if(Discovery[u] < Discovery[v]){
+            index2 = Finishing[v] ; 
+         }else{
+            index2 = Finishing[u] ;
+         }
+         
+         pre_w = sum(index+1,index+1,4) ;
+         add(index+1,-pre_w,4) ;
+         add(index+1,x,4) ;
+         
+         pre_w = sum(index2+1,index2+1,4) ;
+         add(index2+1,-pre_w,4) ;
+         add(index2+1,-x,4) ;
+        
+    }
+    
+    long long root_vertex_query(long long x){
+       long long index = Discovery[x] ;
+       long long ans   = sum(1LL,index+1,3) ;
+       return ans ;
+    }
+    
+    
+    long long root_edge___query(long long x){
+       long long index = Discovery[x] ;
+       long long ans = sum(2LL,index+1,4) ;
+       return ans ;
+    }
+    
+   long long vertex_whight_please(long long x){
+      long long index = Discovery[x] ;
+      long long res   = sum(index+1,index+1,1) ;
+      return res ;
+   } 
+  
+   long long edge___whight_please(long long u , long long v){
+      long long index = max(Discovery[u],Discovery[v]) ;
+      long long now_w = sum(index+1,index+1,2) ;
+      return now_w ;
+   }
+    
+};
+
+Euler_Tour Euler_Tour ;
+
+// ----------------main外に書くcode-----------------------------------------------------
+
+// ----------------main内に書くcode-----------------------------------------------------
+
+// オイラーツアーの初期化
+
+Euler_Tour.init(N,M,A,B) ;
+Euler_Tour.dfs() ;
+Euler_Tour.subtree_vertex_whight_init() ;
+
+vector<long long> visit     = Euler_Tour.give_vector("visit") ;
+vector<uint64_t>  visit1    = Euler_Tour.special_vector("visit1") ; //WMと併用する場合 l = Dis[u] , r = Fis[u] で区間[l,r)になってるので、rに＋1とかしなくていい
+vector<long long> depth     = Euler_Tour.give_vector("depth") ;
+vector<long long> vcost1    = Euler_Tour.give_vector("vcost1") ;
+vector<long long> vcost2    = Euler_Tour.give_vector("vcost2") ;
+vector<long long> ecost1    = Euler_Tour.give_vector("ecost1") ;
+vector<long long> ecost2    = Euler_Tour.give_vector("ecost2") ;
+vector<long long> Discovery = Euler_Tour.give_vector("Discovery") ;
+vector<long long> Finishing = Euler_Tour.give_vector("Finishing") ;
+
+// セグ木の初期化
+
+long long D = depth.size() ;
+vector<S> segseg(D) ;
+
+for(long long i = 0 ; i < D ; i++){
+   segseg[i] = {depth[i],visit[i]} ;
+}
+
+segtree<S,op,e> seg(segseg);
+
+// LCAの関数
+
+auto LCA = [&](long long u, long long v) -> long long {
+    long long Dis_u = min(Discovery[u], Discovery[v]);
+    long long Fin_v = max(Finishing[u], Finishing[v]);
+
+    long long ans = seg.prod(Dis_u, Fin_v).index;
+    return ans;
+};
+
+// any_two_vertices_vertexの関数
+
+auto any_two_vertices_vertex = [&](long long u , long long v) -> long long {
+     long long pz_u = Euler_Tour.root_vertex_query(u) ;
+     long long pz_v = Euler_Tour.root_vertex_query(v) ;
+     long long lca  = LCA(u,v) ;
+     long long pz_a = Euler_Tour.root_vertex_query(lca) ;
+     long long now_w = Euler_Tour.vertex_whight_please(lca) ;
+     
+     return pz_u + pz_v - 2*pz_a + now_w  ;
+};
+
+// any_two_vertices___egdeの関数
+
+auto any_two_vertices___egde = [&](long long u , long long v) -> long long {
+     long long pe_u = Euler_Tour.root_edge___query(u) ;
+     long long pe_v = Euler_Tour.root_edge___query(v) ;
+     long long lca  = LCA(u,v) ;
+     long long pe_a = Euler_Tour.root_edge___query(lca) ;
+     
+     return pe_u + pe_v - 2*pe_a ;
+};
+
+// ----------------main内に書くcode-----------------------------------------------------
+

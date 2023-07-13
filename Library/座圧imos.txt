@@ -1,0 +1,149 @@
+/*
+
+座圧imos法
+
+問題   https://atcoder.jp/contests/abc309/tasks/abc309_c
+提出   https://atcoder.jp/contests/abc309/submissions/43446308
+
+問題   https://atcoder.jp/contests/abc221/tasks/abc221_d
+提出   https://atcoder.jp/contests/abc221/submissions/43446643
+
+問題   https://atcoder.jp/contests/abc294/submissions/43448272
+提出   https://atcoder.jp/contests/abc294/tasks/abc294_e
+
+機能
+
+imos.init(vector<tuple<long long,long long,long long>> A)        : 初期化
+imos.array()                : 下みたいに返す [a,b]
+imos.day_information(long long x ) : x日の値返す  O(logN)
+imos.Section_array()        : imosした後区間の状況を返す [a,b,c] みたいに
+imos.Compression(vector<long long> A) : 座標圧縮する
+imos.reset()                : 全部空にする
+
+区間[a,b] に +cしたい！をN個与えていい感じに処理する。
+したあとの配列を <day,x> で返す
+
+ex) 
+   [1,2] +3 
+   [2,3] +4 なら
+
+1 3
+2 7
+3 4
+4 0
+1000000000000000002 0
+
+で返す (INFは一応)
+
+*/
+
+struct imos{
+       
+       vector<tuple<long long,long long,long long>> number ;
+       map<long long,long long> MAP ; 
+       map<long long,long long> MMAP ;
+       vector<long long> imos ;
+       vector<long long> search ;
+       const long long LINF = 1000000000000000002LL ;
+
+       map<long long,long long> Compression(vector<long long> A){
+       sort(A.begin(),A.end()) ;
+       A.erase(unique(A.begin(),A.end()),A.end()) ;
+    
+       map<long long,long long> res ;
+       long long index = 0 ;
+       for(auto &u : A){
+       res[u] = index ;
+       index ++ ;
+       }
+    
+       return res ;
+       }
+       
+       void init(vector<tuple<long long,long long,long long>> A){
+            long long N = A.size() ;
+            number.resize(N+1) ;
+            
+            for(long long i = 0 ; i < N ; i++){
+                auto [a,b,c] = A[i] ;
+                number[i] = {a,b+1,c} ;
+            }
+            number[N] = {LINF,LINF,0} ;
+            
+            vector<long long> x ;
+            for(long long i = 0 ; i <= N ; i++){
+                auto [a,b,c] = number[i] ;
+                x.push_back(a) ;
+                x.push_back(b) ;
+            }
+            
+            MAP = Compression(x) ;
+            long long M = MAP.size() ;
+            
+            imos.resize(M+1) ;
+            
+            for(long long i = 0 ; i <= N ; i++){
+                auto [a,b,c] = number[i] ;
+                long long aa = MAP[a] ;
+                long long bb = MAP[b] ;
+                MMAP[aa] = a ;
+                MMAP[bb] = b ;
+                imos[aa] += c ;
+                imos[bb] -= c ;
+            }
+            
+            for(long long i = 0 ; i < M ; i++){
+                imos[i+1] += imos[i] ;
+            }
+            
+            for(auto &u : MAP){
+                 auto [a,b] = u ;
+                 search.push_back(a) ;
+            }
+            return ;
+       }
+
+       void reset(){
+            number.clear() ;
+            imos.clear() ;
+            search.clear() ;
+            MAP.clear() ;
+            MMAP.clear() ;
+       }                     
+            
+        vector<pair<long long,long long>> array(){
+                 long long M = imos.size() ;
+                 vector<pair<long long,long long>> res(M-1) ; 
+                 for(long long i = 0 ; i <= M-2 ; i++){
+                     res[i] = {MMAP[i],imos[i]} ;
+                 }
+                 
+                 res.pop_back() ;
+                 return res ;
+        }
+        
+        vector<tuple<long long,long long,long long>>  Section_array(){
+                long long M = imos.size() ;
+                vector<tuple<long long,long long,long long>>  res ;
+                for(long long i = 0 ; i <= M-2 ; i++){
+                    res.push_back({MMAP[i],MMAP[i+1]-1,imos[i]}) ;
+                }
+                res.pop_back() ;
+                return res ;
+                
+        }
+        
+        long long day_information(long long k){
+           long long p = search[0] ;
+           if(k < p)return 0 ;
+           long long index = upper_bound(search.begin(),search.end(),k) - search.begin() ;
+           index -- ;
+           long long day = search[index] ;
+           long long res = MAP[day] ;
+           return imos[res] ;
+        }    
+        
+};
+
+imos imos ;
+

@@ -1,0 +1,42 @@
+/*
+
+エラトステネスの篩  前計算O(10^7)で1以上10^7以下の数が素数かどうかをO(1)で判定する
+
+era.look(long long x) : xが素数か判定する true なら素数
+era.enu_count(long long x) : xの素因数の個数を返す
+
+*/
+
+
+struct era{
+       long long check[10000010] ;
+       bool p = false ;
+       
+       void init(){
+            p = true ;
+            for(long long i = 2 ; i <= 10000000 ; i++){
+                if(check[i] == 0){
+                    for(long long j = i + i ; j <= 10000000 ; j += i){
+                        check[j] ++ ;
+                    }
+                }
+            }
+       }
+       
+       bool look(long long x){
+            if(p == false)init() ;
+            if(x == 1)return false ;
+            if(check[x] == 0)return true ;
+            else return false ;
+       }
+       
+       long long enu_count(long long x){
+          if(p == false)init() ; 
+          if(x == 1)return 1 ;
+          if(check[x] == 0)return 1 ;
+          return check[x] ;
+       }
+    
+};
+
+era era ;

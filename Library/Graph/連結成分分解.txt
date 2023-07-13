@@ -1,0 +1,76 @@
+/*
+
+隣接リストと、頂点数を渡すと、連結成分分解した後の2次元配列を返す。(空の配列はないようにした。)
+
+問題   https://atcoder.jp/contests/abc282/tasks/abc282_d
+提出   https://atcoder.jp/contests/abc282/submissions/42832441
+
+隣接リストは必ず0-indexで渡す
+
+*/
+
+
+class UnionFind {
+      vector<long long> par;
+public:
+ 
+  void init(long long sz) {
+       par.resize(sz,-1);
+  }
+   // 各連結成分の一番上を返す
+  long long root(long long x) {
+    if (par[x] < 0) return x;
+    return par[x] = root(par[x]);
+  }
+   
+  // 結合作業
+  bool unite(long long x, long long y) {
+    x = root(x); y = root(y);
+    if (x == y) return false;
+    if (par[x] > par[y]) swap(x,y);
+    par[x] += par[y];
+    par[y] = x;
+    return true;
+  }
+  // 同じグループか判定
+  bool same(long long x, long long y) { return root(x) == root(y);}
+  // グループのサイズをＧＥＴ！
+  long long size(long long x) { return -par[root(x)];}
+  
+};
+ 
+UnionFind UF ;
+
+vector<vector<long long>> Connected_Component_Bipartite(vector<vector<long long>> &G , long long N){
+        UF.init(N) ;
+        
+        for(long long i = 0 ; i < N ; i++){
+            if(G[i].size() == 0) continue ;
+            for(auto &u : G[i]){
+                if(UF.same(i,u))continue ;
+                UF.unite(i,u) ;
+            }
+        }
+         
+        vector<vector<long long>> res(N) ;
+        for(long long i = 0 ; i < N ; i++){
+            long long pos = UF.root(i) ;
+            res[pos].push_back(i) ;
+        }
+        
+        long long M = 0 ;
+        for(long long i = 0 ; i < N ; i++){
+            if(res[i].size() != 0) M ++ ;
+        }
+        
+        vector<vector<long long>> new_res(M) ;
+        long long index = 0 ;
+        for(long long i = 0 ; i < N ; i++){
+            if(res[i].size() == 0) continue ;
+            for(auto &u : res[i]){
+                new_res[index].push_back(u) ;
+            }
+            index ++ ;
+        }
+        return new_res ;
+}

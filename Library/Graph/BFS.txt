@@ -1,0 +1,118 @@
+/*
+
+BFSしてくれる(単一始点最短路)
+
+問題  https://atcoder.jp/contests/abc309/tasks/abc309_d
+提出  https://atcoder.jp/contests/abc309/submissions/43473822
+
+問題  https://atcoder.jp/contests/abc270/tasks/abc270_c
+提出  https://atcoder.jp/contests/abc270/submissions/43473902
+
+出来ること
+
+BFS.init(vector<vector<long long>> G,long long pos) :  隣接リストと始点渡すと、BFSしてくれる      :   O(N+M)
+BFS.reset()                                         :  リセットしてくれる                      :   O(1) 
+BFS.max_dist()                                      :　最大の距離を返してくれる               :   O(1)
+BFS.max_dist_array()                                : max_distを満たす{頂点,max_dist}を返す : O(N)
+BFS.Restoration_road(long long pos)                 : 始点からposまでの経路返す              : O(dist|pos - start|)
+BFS.pos_dist(long long pos)                         : dist[pos]返す                       : O(1) 
+BFS.array()                                         : {頂点、距離}返す                     : O(N)
+
+
+*/
+
+
+struct BFS {
+    
+       vector<vector<long long>> G ;
+       vector<long long> dist ;
+       vector<long long> to ;
+       long long ma = 0 ;
+       
+       void init(vector<vector<long long>> &A ,long long x){
+            long long N = A.size() ;
+            G.resize(N) ;
+            for(long long i = 0 ;i < N ; i++){
+                G[i] = A[i] ;
+            }
+            
+            dist.resize(N,-1) ;
+            to.resize(N) ;
+            
+            queue<long long> Q ;
+            Q.push(x) ;
+            dist[x] = 0 ;
+            
+            to[x] = -1 ;
+            
+            while(!Q.empty()){
+                 long long pos = Q.front() ;
+                 Q.pop() ;
+                 
+                 for(auto &u : G[pos]){
+                     
+                     if(dist[u] == -1){
+                        dist[u] = dist[pos] + 1 ;
+                        Q.push(u) ;
+                        to[u] = pos ;
+                     }
+                 }
+                 
+            }
+            
+            for(long long i = 0 ;i < N ; i++){
+                ma = max(ma,dist[i]) ;
+            }
+            
+       }
+       
+       void reset(){
+            G.clear() ;
+            dist.clear() ;
+            to.clear() ;
+            ma = 0 ;
+       }
+       
+       long long max_dist(){
+          return ma ;
+       } 
+       
+       vector<pair<long long,long long>> max_dist_array(){
+            long long Ma = max_dist() ;
+            long long N  = dist.size() ;
+            vector<pair<long long,long long>> res ;
+            
+            for(long long i = 0 ;i < N ; i++){
+                if(dist[i] == Ma){res.push_back({i,dist[i]}) ;}
+            }
+            
+            return res ;
+       }
+       
+       vector<long long> Restoration_road(long long pos){
+          vector<long long> res ;
+          while(pos != -1){
+               res.push_back(pos) ;
+               pos = to[pos] ;
+          }
+          reverse(res.begin(),res.end()) ;
+          return res ;
+       }
+       
+       long long pos_dist(long long pos){
+          return dist[pos] ;
+       }
+       
+       vector<pair<long long,long long>> array(){
+            vector<pair<long long,long long>> res ;
+            long long N = dist.size() ;
+            for(long long i = 0 ; i < N ; i++){
+                res.push_back({i,dist[i]}) ;
+            }
+            
+            return res ;
+       } 
+       
+};
+
+BFS BFS ;

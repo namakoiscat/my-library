@@ -1,0 +1,124 @@
+/*
+
+multisetで混乱しないために
+
+問題  https://atcoder.jp/contests/abc241/tasks/abc241_d
+提出  https://atcoder.jp/contests/abc241/submissions/43068468
+
+機能
+
+初期化                                       : min_multiset A ; 
+要素数                                       : A.size() ;
+値xをk個追加                                  : A.insert(x,k) ;
+値xをk個削除                                  : A.erase(x,k) ;  A内の個数以上の要素指定しても、ok
+値x以上で最小の値を返す                         : A.x_lower_bound(x) ;
+値x越える最小の値を返す                          : A.x_upper_bound(x) ;
+x以上の要素の内、小さい方からk番目の値返す          : A.x_lower_bound_plus_k_advance(x,k) ;
+x以下の要素の内、大きい方からk番目の値返す          : A.x_less_bound_pull_k_advance(x,k) ;   
+multiset内の要素を全部列挙                     : A.All() ;
+値xがmultiset内にあるかどうか返す                 : A.contain(x) ;  true ならある
+値xが何個あるか返す関数                         : A.count(x) ;
+
+*/
+
+class min_multiset {
+    
+       multiset<long long> A ;
+       map<long long,long long> MAP ;
+       bool p = false ;
+       const long long INF = 1000000000000000000LL ;
+     
+public :        
+       // -LINFとLINFが10個ずつ入ってる
+       
+       void init(){
+            p = true ;
+             for(long long i = 1 ; i <= 10 ; i++){
+                 A.insert(-INF) ;
+                 A.insert(INF) ;
+             }
+       } 
+       
+       long long count(long long x){
+          return MAP[x] ; 
+       }
+       
+       long long size(){
+          return A.size() ; 
+       }
+       
+       void insert(long long x, long long k){
+            for(long long i = 1 ;i <= k ; i++){
+                A.insert(x) ;
+            }
+            MAP[x] += k ;
+       }
+
+       void erase(long long x, long long k){
+            if(MAP.find(x) == MAP.end())return ;
+            if(MAP[x] <= k){
+               A.erase(x) ;
+               MAP[x] = 0 ;
+               return ;
+            }
+            
+            for(long long i = 1 ;i <= k ; i++){
+                A.erase(A.find(x)) ;
+            }
+            
+            MAP[x] -= k ;
+       }
+       
+       // x以上で最小の値
+       long long x_lower_bound(long long x){
+          auto it = A.lower_bound(x) ;
+          if(*it == INF)return -1 ;
+          return *it ;
+       }
+       
+       // x+1以上で最小の値
+       long long x_upper_bound(long long x){
+          auto it = A.upper_bound(x) ;
+          if(*it == INF)return -1 ;
+          return *it ;
+       }
+       
+       
+       // x以上の要素の内、小さい方かたk番目の値返す
+       long long x_lower_bound_plus_k_advance(long long x, long long k){
+          if(p == false){init() ;} 
+          auto it = A.lower_bound(x) ;
+          for(long long i = 1 ; i <= k-1 ; i++){
+              it ++ ;
+          }
+          
+          long long res = *it ;
+          if(res == INF)res = -1 ;
+          return res ;
+       }
+       
+       // x以下の要素の内、大きい方からk番目の値返す
+       long long x_less_bound_pull_k_advance(long long x , long long k){
+          if(p == false){init() ;} 
+          auto it = A.upper_bound(x) ;
+          for(long long i = 1 ; i <= k ; i++){
+              it -- ;
+          }
+          
+          long long ans = *it ;
+          if(ans == -INF)ans = -1 ;
+          return ans ;
+       }
+       
+       // A内の要素全部出す
+       void All(){
+            for(auto &u : A)cout << u << " " ;
+       }
+       
+       // A内に値xが含まれているかどうか判定する
+       bool contain(long long x){
+            if(A.find(x) != A.end())return true ;
+            else return false ;
+       }
+       
+};

@@ -1,0 +1,35 @@
+/*
+
+平方数かの判定  前計算O(10^6)で1以上10^12以下の数が平方数かどうかにO(1)で判定する
+
+SM.scan(long long x) : xが平方数か判定する true なら平方数
+
+*/
+
+struct sqrt_machine{
+    
+    vector<long long> A ;
+    const long long M = 1000000 ;
+    const long long LINF = 1000000000000000000LL ;
+    bool p = false ;
+    
+    void init(){
+        p = true ;
+        A.push_back(-1) ;
+        for(long long i =1 ; i <= M ; i++){
+            A.push_back(i*i) ;
+        }
+        A.push_back(LINF) ;
+    }
+  
+
+    bool scan(long long a){
+        if(p == false)init() ;
+        long long pos = lower_bound(A.begin(),A.end(),a) - A.begin() ;
+        if(A[pos] == -1 || A[pos] == LINF || A[pos] != a)return false ;
+        return true ;
+    }
+    
+};
+
+sqrt_machine SM ;
