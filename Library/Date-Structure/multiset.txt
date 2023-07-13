@@ -7,16 +7,16 @@ multisetで混乱しないために
 
 機能
 
-初期化                                       : min_multiset A ; 
-要素数                                       : A.size() ;
-値xをk個追加                                  : A.insert(x,k) ;
-値xをk個削除                                  : A.erase(x,k) ;  A内の個数以上の要素指定しても、ok
-値x以上で最小の値を返す                         : A.x_lower_bound(x) ;
+初期化                                          : min_multiset A ; 
+要素数                                          : A.size() ;
+値xをk個追加                                    : A.insert(x,k) ;
+値xをk個削除                                    : A.erase(x,k) ;  A内の個数以上の要素指定しても、ok
+値x以上で最小の値を返す                          : A.x_lower_bound(x) ;
 値x越える最小の値を返す                          : A.x_upper_bound(x) ;
-x以上の要素の内、小さい方からk番目の値返す          : A.x_lower_bound_plus_k_advance(x,k) ;
-x以下の要素の内、大きい方からk番目の値返す          : A.x_less_bound_pull_k_advance(x,k) ;   
-multiset内の要素を全部列挙                     : A.All() ;
-値xがmultiset内にあるかどうか返す                 : A.contain(x) ;  true ならある
+x以上の要素の内、小さい方からk番目の値返す        : A.x_lower_bound_plus_k_advance(x,k) ;
+x以下の要素の内、大きい方からk番目の値返す        : A.x_less_bound_pull_k_advance(x,k) ;   
+multiset内の要素を全部列挙                      : A.All() ;
+値xがmultiset内にあるかどうか返す               : A.contain(x) ;  true ならある
 値xが何個あるか返す関数                         : A.count(x) ;
 
 */
